@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head %}
+  {% if profile %}<link rel="preload" as="image" href="{% if profile.hero_image %}{{ profile.hero_image.url }}{% else %}{% static 'img/hero-character.webp' %}{% endif %}" fetchpriority="high">{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not profile %}
+  <section class="wrap empty-site">
+    <h1>Your portfolio has no content yet</h1>
+    <p>Add your name, role and contact details to get started. To see the design with sample content first, run <code>python manage.py seed_portfolio</code>.</p>
+    <a class="btn btn--ink" href="{% url 'admin:portfolio_profile_add' %}">Add your profile</a>
+  </section>
+{% else %}
+
+{# ---------- Hero ---------- #}
+<section class="hero" aria-labelledby="hero-title" data-hero>
+  <div class="hero__glow" aria-hidden="true"></div>
+
+  <div class="hero__stage">
+    <h1 id="hero-title" class="hero__word" data-depth="0.18" style="--chars: {{ profile.hero_chars }}">
+      <span class="hero__word-line">{{ profile.first_name }}</span>
+      {% if profile.last_name %}<span class="hero__word-line hero__word-line--2">{{ profile.last_name }}</span>{% endif %}
+      <span class="visually-hidden">, {{ profile.role }}</span>
+    </h1>
+
+    <div class="hero__figure-wrap" data-depth="0.42">
+      <img class="hero__figure"
+           src="{% if profile.hero_image %}{{ profile.hero_image.url }}{% else %}{% static 'img/hero-character.webp' %}{% endif %}"
+           alt="" width="1100" height="1539" fetchpriority="high">
+    </div>
+
+    <span class="hero__outline" aria-hidden="true" data-depth="0.7">{{ profile.first_name }}</span>
+  </div>
+
+  <div class="wrap hero__bar">
+    <div class="hero__info">
+      <p class="avail {% if profile.is_available %}avail--open{% endif %}" title="{{ profile.availability_text }}">
+        <span class="avail__dot" aria-hidden="true"></span>
+        {% if profile.is_available %}Available for work{% else %}Not taking new work right now{% endif %}
+      </p>
+      <p class="hero__role">{{ profile.role }}{% if profile.location %} in {{ profile.location }}{% endif %}</p>
+      <p class="hero__headline">{{ profile.headline }}</p>
+    </div>
+
+    <div class="hero__side">
+      <div class="hero__actions">
+        <a class="btn btn--accent btn--lg" href="#work">See selected work</a>
+        {% if profile.resume %}
+          <a class="btn btn--ghost btn--lg" href="{{ profile.resume.url }}" download>Download résumé</a>
+        {% else %}
+          <a class="btn btn--ghost btn--lg" href="#contact">Get in touch</a>
+        {% endif %}
+      </div>
+      <dl class="hero__stats">
+        {% if profile.years_experience %}<div><dt>Years experience</dt><dd>{{ profile.years_experience }}+</dd></div>{% endif %}
+        {% if profile.projects_built %}<div><dt>Websites &amp; web apps</dt><dd>{{ profile.projects_built }}+</dd></div>
+        {% elif project_count %}<div><dt>Projects built</dt><dd>{{ project_count }}</dd></div>{% endif %}
+        {% if profile.live_projects %}<div><dt>Live projects</dt><dd>{{ profile.live_projects }}+</dd></div>
+        {% elif live_count %}<div><dt>Live projects</dt><dd>{{ live_count }}</dd></div>{% endif %}
+      </dl>
+    </div>
+  </div>
+
+  <a class="hero__scroll" href="#work" aria-label="Scroll to selected work"><span></span></a>
+</section>
+
+{# ---------- Tech strip ---------- #}
+{% if marquee_skills %}
+<section class="marquee" aria-label="Tools I work with">
+  <div class="marquee__band marquee__band--a" aria-hidden="true">
+    <div class="marquee__track">
+      {% for i in "12" %}{% for skill in marquee_skills %}<span class="marquee__item">{{ skill.name }}</span>{% endfor %}{% endfor %}
+    </div>
+  </div>
+  <div class="marquee__band marquee__band--b">
+    <div class="marquee__track">
+      {% for skill in marquee_skills %}<span class="marquee__item">{{ skill.name }}</span>{% endfor %}
+      {% for skill in marquee_skills %}<span class="marquee__item" aria-hidden="true">{{ skill.name }}</span>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------- Work ---------- #}
+<section class="section" id="work" aria-labelledby="work-title">
+  <div class="wrap">
+    <header class="section__head">
+      <h2 id="work-title" class="section__title">Selected work</h2>
+      <p class="section__lede">Products I've built and shipped. Open a project for the details, or visit the ones that are live.</p>
+    </header>
+
+    {% if projects %}
+    <ol class="work-list" role="list">
+      {% for project in projects %}
+      <li class="work-row tone-{{ project.tone }}">
+        <a class="work-row__link" href="{{ project.get_absolute_url }}">
+          <span class="work-row__main">
+            <span class="work-row__title">{{ project.title }}</span>
+            <span class="work-row__summary">{{ project.summary }}</span>
+          </span>
+          {% firstof project.outcome project.approach_paragraphs.0 as detail %}
+          {% if detail %}<span class="work-row__outcome">{{ detail }}</span>{% else %}<span></span>{% endif %}
+          <span class="work-row__meta">
+            {% if project.live_url %}<span class="live-pill">Live</span>{% endif %}
+            <span class="work-row__kind">{{ project.kind }}{% if project.year %}, {{ project.year }}{% endif %}</span>
+          </span>
+        </a>
+        {% if project.stack_list or project.live_url %}
+        <div class="work-row__foot">
+          {% if project.stack_list %}
+          <ul class="tags" aria-label="Built with">
+            {% for tech in project.stack_list|slice:":5" %}<li>{{ tech }}</li>{% endfor %}
+            {% if project.stack_list|length > 5 %}<li>+{{ project.stack_list|length|add:"-5" }} more</li>{% endif %}
+          </ul>
+          {% endif %}
+          {% if project.live_url %}
+            <a class="live-link" href="{{ project.live_url }}" target="_blank" rel="noopener">Visit {{ project.live_domain }}
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+            </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+      <p class="empty-note">No projects to show yet. Add one in the admin under Projects and tick "Is featured".</p>
+    {% endif %}
+
+    {% if other_projects %}
+    <div class="more-work" aria-labelledby="more-work-title">
+      <div class="more-work__head">
+        <h3 id="more-work-title" class="more-work__title">More projects</h3>
+        <p class="more-work__count">{{ other_projects|length }} more</p>
+      </div>
+      <ul class="more-work__grid" role="list">
+        {% for project in other_projects %}
+        <li class="mini-project tone-{{ project.tone }}">
+          <div class="mini-project__top">
+            <span class="mini-project__kind">{{ project.kind }}{% if project.year %}, {{ project.year }}{% endif %}</span>
+            {% if project.live_url %}<span class="live-pill">Live</span>{% endif %}
+          </div>
+          <h4 class="mini-project__title"><a href="{{ project.get_absolute_url }}">{{ project.title }}</a></h4>
+          <p class="mini-project__summary">{{ project.summary }}</p>
+          {% if project.stack_list %}
+          <ul class="tags" aria-label="Built with">
+            {% for tech in project.stack_list|slice:":4" %}<li>{{ tech }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+          {% if project.live_url %}
+            <a class="live-link mini-project__live" href="{{ project.live_url }}" target="_blank" rel="noopener">Visit {{ project.live_domain }}
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+            </a>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{# ---------- Services ---------- #}
+{% if services %}
+<section class="section" id="services" aria-labelledby="services-title">
+  <div class="wrap">
+    <header class="section__head">
+      <h2 id="services-title" class="section__title">What I can build for you</h2>
+      <p class="section__lede">From the first database table to a live, monitored deployment.</p>
+    </header>
+    <ul class="services" role="list">
+      {% for service in services %}
+      <li class="service">
+        <h3 class="service__title">{{ service.title }}</h3>
+        <p class="service__summary">{{ service.summary }}</p>
+        {% if service.stack_list %}
+        <ul class="tags" aria-label="Tools">
+          {% for t in service.stack_list %}<li>{{ t }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{# ---------- Process ---------- #}
+{% if process_steps %}
+<section class="section section--surface" id="process" aria-labelledby="process-title">
+  <div class="wrap">
+    <header class="section__head">
+      <h2 id="process-title" class="section__title">How a project runs</h2>
+      <p class="section__lede">Six steps, from understanding the problem to improving what's live.</p>
+    </header>
+    <ol class="process" role="list">
+      {% for step in process_steps %}
+      <li class="process__step">
+        <span class="process__num" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</span>
+        <h3 class="process__title"><span class="visually-hidden">Step {{ forloop.counter }}: </span>{{ step.title }}</h3>
+        <p class="process__desc">{{ step.description }}</p>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+{% endif %}
+
+{# ---------- Principles ---------- #}
+{% if principles %}
+<section class="section" id="principles" aria-labelledby="principles-title">
+  <div class="wrap">
+    <header class="section__head">
+      <h2 id="principles-title" class="section__title">How I think about software</h2>
+      <p class="section__lede">The rules I come back to on every project.</p>
+    </header>
+    <ul class="principles" role="list">
+      {% for p in principles %}
+      <li class="principle">
+        <h3 class="principle__title">{{ p.title }}</h3>
+        <p class="principle__desc">{{ p.description }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{# ---------- Experience ---------- #}
+<section class="section section--surface" id="experience" aria-labelledby="exp-title">
+  <div class="wrap">
+    <header class="section__head">
+      <h2 id="exp-title" class="section__title">Experience</h2>
+      <p class="section__lede">Most recent first.</p>
+    </header>
+
+    {% if experience %}
+    <ol class="timeline" role="list">
+      {% for job in experience %}
+      <li class="timeline__item">
+        <p class="timeline__dates">
+          {% if job.year_only %}
+            <time datetime="{{ job.start_date|date:'Y' }}">{{ job.start_date|date:"Y" }}</time>
+            {% if job.is_current %}to <span class="timeline__now">now</span>
+            {% elif job.end_date|date:"Y" != job.start_date|date:"Y" %}to <time datetime="{{ job.end_date|date:'Y' }}">{{ job.end_date|date:"Y" }}</time>{% endif %}
+          {% else %}
+            <time datetime="{{ job.start_date|date:'Y-m' }}">{{ job.start_date|date:"M Y" }}</time>
+            to
+            {% if job.is_current %}<span class="timeline__now">now</span>{% else %}<time datetime="{{ job.end_date|date:'Y-m' }}">{{ job.end_date|date:"M Y" }}</time>{% endif %}
+          {% endif %}
+        </p>
+        <div class="timeline__body">
+          <h3 class="timeline__role">{{ job.role }}</h3>
+          {% if job.company or job.location %}
+          <p class="timeline__company">
+            {% if job.company_url %}<a href="{{ job.company_url }}" target="_blank" rel="noopener">{{ job.company }}</a>{% else %}{{ job.company }}{% endif %}{% if job.company and job.location %}, {% endif %}{{ job.location }}
+          </p>
+          {% endif %}
+          {% if job.summary %}<p class="timeline__summary">{{ job.summary }}</p>{% endif %}
+          {% if job.highlight_list %}
+          <ul class="timeline__highlights">
+            {% for h in job.highlight_list %}<li>{{ h }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+      <p class="empty-note">No roles added yet. Add your jobs in the admin under Experience.</p>
+    {% endif %}
+
+    {% if skill_groups %}
+    <section class="skills" aria-labelledby="skills-title">
+      <div class="skills__head">
+        <h3 id="skills-title" class="skills__title">Tools I use</h3>
+        <p class="skills__legend"><span class="tool__badge">Daily</span> marks the tools I use most weeks.</p>
+      </div>
+      <div class="skills__grid">
+        {% for group in skill_groups %}
+        <div class="skills__group">
+          <div class="skills__group-head">
+            <h4>{{ group.name }}</h4>
+            <span class="skills__count">{{ group.skills.all|length }} tool{{ group.skills.all|length|pluralize }}</span>
+          </div>
+          <ul class="tools" role="list">
+            {% for skill in group.skills.all %}
+            <li class="tool{% if skill.is_primary %} is-primary{% endif %}"{% if skill.brand_color %} style="--brand: {{ skill.brand_color }}"{% endif %}>
+              <span class="tool__icon" aria-hidden="true">
+                <span class="tool__glyph" style="--icon: url('{% static 'img/tools/' %}{{ skill.icon_slug }}.svg')"></span>
+              </span>
+              <span class="tool__name">{{ skill.name }}</span>
+              {% if skill.is_primary %}<span class="tool__badge">Daily</span>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</section>
+
+{# ---------- Testimonials (only shown once real quotes are added in the admin) ---------- #}
+{% if testimonials %}
+<section class="section" id="testimonials" aria-labelledby="testimonials-title">
+  <div class="wrap">
+    <header class="section__head">
+      <h2 id="testimonials-title" class="section__title">What people say</h2>
+      <p class="section__lede">From clients and teammates I've worked with.</p>
+    </header>
+    <ul class="quotes" role="list">
+      {% for t in testimonials %}
+      <li class="quote">
+        <blockquote class="quote__text"><p>{{ t.quote }}</p></blockquote>
+        <p class="quote__by">
+          <span class="quote__avatar" aria-hidden="true">{{ t.initials }}</span>
+          <span><strong>{{ t.name }}</strong>{% if t.role or t.company %}<span class="quote__role">{{ t.role }}{% if t.role and t.company %}, {% endif %}{{ t.company }}</span>{% endif %}</span>
+        </p>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{# ---------- About ---------- #}
+<section class="section" id="about" aria-labelledby="about-title">
+  <div class="wrap about">
+    <div class="about__portrait">
+      {% if profile.photo %}
+        <img src="{{ profile.photo.url }}" alt="Portrait of {{ profile.name }}" loading="lazy">
+      {% else %}
+        <div class="about__placeholder" aria-hidden="true"><span>{{ profile.initials }}</span></div>
+      {% endif %}
+    </div>
+    <div class="about__text">
+      <h2 id="about-title" class="section__title">About {{ profile.first_name }}</h2>
+      {% for para in profile.about_paragraphs %}<p>{{ para }}</p>{% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ---------- FAQ ---------- #}
+{% if faqs %}
+<section class="section" id="faq" aria-labelledby="faq-title">
+  <div class="wrap faq">
+    <header class="faq__head">
+      <h2 id="faq-title" class="section__title">Questions people ask</h2>
+      <p class="section__lede">Something else on your mind? <a href="#contact">Send me a message</a>.</p>
+    </header>
+    <div class="faq__list">
+      {% for f in faqs %}
+      <details class="faq__item"{% if forloop.first %} open{% endif %}>
+        <summary>{{ f.question }}<span class="faq__icon" aria-hidden="true"></span></summary>
+        <div class="faq__answer"><p>{{ f.answer }}</p></div>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------- Call to action ---------- #}
+<section class="cta" aria-labelledby="cta-title">
+  <div class="wrap cta__inner">
+    <p class="cta__kicker">Have a project or a role in mind?</p>
+    <h2 id="cta-title" class="cta__title">Let's build it</h2>
+    <div class="cta__actions">
+      <a class="btn btn--accent btn--lg" href="#contact">Start a conversation</a>
+      {% if profile.email %}<a class="btn btn--ghost btn--lg" href="mailto:{{ profile.email }}">Email {{ profile.first_name }}</a>{% endif %}
+    </div>
+  </div>
+</section>
+
+{# ---------- Contact ---------- #}
+<section class="section section--contact" id="contact" aria-labelledby="contact-title">
+  <div class="wrap contact">
+    <div class="contact__intro">
+      <h2 id="contact-title" class="section__title">Tell me about the role or project</h2>
+      <p>Send a few lines and I'll reply within two working days. If email is easier, write to me directly.</p>
+      <p class="contact__direct">
+        <a href="mailto:{{ profile.email }}">{{ profile.email }}</a>
+        <button class="copy-btn" type="button" data-copy="{{ profile.email }}" aria-label="Copy email address">Copy</button>
+      </p>
+      <ul class="contact__links" role="list">
+        {% if profile.linkedin_url %}<li><a href="{{ profile.linkedin_url }}" target="_blank" rel="me noopener">LinkedIn</a></li>{% endif %}
+        {% if profile.github_url %}<li><a href="{{ profile.github_url }}" target="_blank" rel="me noopener">GitHub</a></li>{% endif %}
+        {% if profile.phone %}<li><a href="tel:{{ profile.phone }}">{{ profile.phone }}</a></li>{% endif %}
+      </ul>
+    </div>
+
+    <div class="contact__panel">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="form-success" role="status">
+            <p class="form-success__title">Message sent</p>
+            <p>{{ message }}</p>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form class="form" method="post" action="{% url 'portfolio:contact' %}" novalidate data-contact-form>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="form-alert" role="alert">{{ form.non_field_errors|join:" " }}</div>
+        {% endif %}
+
+        <fieldset class="field field--choice">
+          <legend>{{ form.reason.label }}</legend>
+          <div class="choices">
+            {% for radio in form.reason %}
+              <label class="choice">
+                {{ radio.tag }}
+                <span>{{ radio.choice_label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div class="field-row">
+          {% include "portfolio/_field.html" with field=form.name %}
+          {% include "portfolio/_field.html" with field=form.email %}
+        </div>
+        {% include "portfolio/_field.html" with field=form.message %}
+
+        <div class="hp" aria-hidden="true">
+          <label for="{{ form.website.id_for_label }}">Leave this empty</label>
+          {{ form.website }}
+        </div>
+
+        <div class="form__footer">
+          <button class="btn btn--accent" type="submit" data-submit>Send message</button>
+          <p class="form__hint">Your details are only used to reply to you.</p>
+        </div>
+        <p class="form__status" role="status" aria-live="polite" data-form-status></p>
+      </form>
+
+      <div class="form-success" role="status" hidden data-form-success tabindex="-1">
+        <p class="form-success__title">Message sent</p>
+        <p data-form-success-text></p>
+        <button class="btn btn--ghost btn--small" type="button" data-form-reset>Send another message</button>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

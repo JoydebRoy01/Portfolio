@@ -1,0 +1,139 @@
+{% load static %}<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}{% if profile %}{{ profile.name }}, {{ profile.role }}{% else %}Portfolio{% endif %}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ profile.headline|default:'' }}{% endblock %}">
+  <meta name="theme-color" content="#0B0C13" data-theme-color>
+  <script>
+    /* Pick the theme before the page paints, so it never flashes the wrong colours. */
+    (function () {
+      var t = "dark";
+      try { t = localStorage.getItem("theme") || "dark"; } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+      /* Hide the hero figure until it's ready; if scripts fail, show it anyway after 4s. */
+      document.documentElement.classList.add("js-hero");
+      setTimeout(function () { document.documentElement.classList.remove("js-hero"); }, 4000);
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&family=Sedgwick+Ave+Display&display=swap">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  {% block head %}{% endblock %}
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23FF3B4E'/%3E%3Ctext x='16' y='21.5' font-family='Arial' font-weight='700' font-size='14' fill='white' text-anchor='middle'%3E{{ profile.initials|default:'P' }}%3C/text%3E%3C/svg%3E">
+  <script src="{% static 'js/site.js' %}" defer></script>
+  <script type="module" src="{% static 'js/scene.js' %}"></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {# Three.js draws the 3D background into this canvas #}
+  <canvas class="scene" data-scene aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" data-header>
+    <div class="wrap site-header__inner">
+      <a class="brand" href="{% url 'portfolio:home' %}" aria-label="{{ profile.name|default:'Home' }}, home">
+        <span class="brand__mark" aria-hidden="true">{{ profile.initials|default:"P" }}</span>
+        <span class="brand__name">{{ profile.name|default:"Portfolio" }}</span>
+      </a>
+
+      <nav class="site-nav" id="site-nav" aria-label="Main" data-nav>
+        <ul>
+          <li><a href="{% url 'portfolio:home' %}#work" data-nav-link="work">Work</a></li>
+          <li><a href="{% url 'portfolio:home' %}#services" data-nav-link="services">Services</a></li>
+          <li><a href="{% url 'portfolio:home' %}#experience" data-nav-link="experience">Experience</a></li>
+          <li><a href="{% url 'portfolio:home' %}#about" data-nav-link="about">About</a></li>
+          <li><a href="{% url 'portfolio:home' %}#contact" data-nav-link="contact">Contact</a></li>
+        </ul>
+        {% if profile.resume %}
+          <a class="btn btn--small btn--accent" href="{{ profile.resume.url }}" download>Download résumé</a>
+        {% elif profile %}
+          <a class="btn btn--small btn--accent" href="mailto:{{ profile.email }}?subject=R%C3%A9sum%C3%A9%20request">Request résumé</a>
+        {% endif %}
+      </nav>
+
+      <div class="site-header__tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light theme">
+          <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+          <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>
+        </button>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
+          <span class="nav-toggle__bars" aria-hidden="true"></span>
+          <span class="nav-toggle__label">Menu</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a class="brand" href="{% url 'portfolio:home' %}">
+            <span class="brand__mark" aria-hidden="true">{{ profile.initials|default:"P" }}</span>
+            <span class="brand__name">{{ profile.name|default:"Portfolio" }}</span>
+          </a>
+          {% if profile %}
+            <p class="footer-brand__text">{{ profile.role }}{% if profile.location %} based in {{ profile.location }}{% endif %}. {{ profile.availability_text }}.</p>
+            <p class="avail {% if profile.is_available %}avail--open{% endif %}">
+              <span class="avail__dot" aria-hidden="true"></span>
+              {% if profile.is_available %}Available for work{% else %}Not taking new work right now{% endif %}
+            </p>
+          {% endif %}
+        </div>
+
+        <nav class="footer-col" aria-label="Footer">
+          <h2 class="footer-col__title">Explore</h2>
+          <ul role="list">
+            <li><a href="{% url 'portfolio:home' %}#work">Selected work</a></li>
+            <li><a href="{% url 'portfolio:home' %}#services">Services</a></li>
+            <li><a href="{% url 'portfolio:home' %}#process">Process</a></li>
+            <li><a href="{% url 'portfolio:home' %}#experience">Experience</a></li>
+            <li><a href="{% url 'portfolio:home' %}#about">About</a></li>
+            <li><a href="{% url 'portfolio:home' %}#faq">FAQ</a></li>
+          </ul>
+        </nav>
+
+        {% if services %}
+        <div class="footer-col">
+          <h2 class="footer-col__title">Services</h2>
+          <ul role="list">
+            {% for s in services %}<li><a href="{% url 'portfolio:home' %}#services">{{ s.title }}</a></li>{% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <div class="footer-col">
+          <h2 class="footer-col__title">Get in touch</h2>
+          <ul role="list">
+            {% if profile.email %}<li><a href="mailto:{{ profile.email }}">{{ profile.email }}</a></li>{% endif %}
+            {% if profile.phone %}<li><a href="tel:{{ profile.phone }}">{{ profile.phone }}</a></li>{% endif %}
+            {% if profile.linkedin_url %}<li><a href="{{ profile.linkedin_url }}" rel="me noopener" target="_blank">LinkedIn</a></li>{% endif %}
+            {% if profile.github_url %}<li><a href="{{ profile.github_url }}" rel="me noopener" target="_blank">GitHub</a></li>{% endif %}
+            {% if profile.resume %}<li><a href="{{ profile.resume.url }}" download>Download résumé</a></li>{% endif %}
+          </ul>
+        </div>
+      </div>
+
+      {% if profile %}
+      <p class="footer-word" aria-hidden="true">{{ profile.name }}</p>
+      {% endif %}
+
+      <div class="footer-bottom">
+        <p>&copy; {% now "Y" %} {{ profile.name|default:"" }}. Built with Django and Three.js.</p>
+        <a class="footer-top-link" href="#main">
+          Back to top
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

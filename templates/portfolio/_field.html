@@ -1,0 +1,5 @@
+<div class="field{% if field.errors %} has-error{% endif %}" data-field="{{ field.name }}">
+  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }}
+  <p class="field__error" id="{{ field.id_for_label }}-error" data-error-for="{{ field.name }}"{% if not field.errors %} hidden{% endif %}>{{ field.errors|join:" " }}</p>
+</div>

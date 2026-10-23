@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }}, a case study by {{ profile.name }}{% endblock %}
+{% block description %}{{ project.summary }}{% endblock %}
+
+{% block content %}
+<article class="case tone-{{ project.tone }}">
+  <header class="case__head wrap">
+    <a class="case__back" href="{% url 'portfolio:home' %}#work">Back to all work</a>
+    <p class="case__kind">{{ project.kind }}{% if project.year %}, {{ project.year }}{% endif %}</p>
+    <h1 class="case__title">{{ project.title }}</h1>
+    <p class="case__summary">{{ project.summary }}</p>
+  </header>
+
+  <div class="wrap">
+    <figure class="case__visual">
+      {% if project.image %}
+        <img src="{{ project.image.url }}" alt="Screenshot of {{ project.title }}">
+      {% else %}
+        <div class="case__panel" aria-hidden="true">
+          <span class="case__panel-bar"><i></i><i></i><i></i><span>{{ project.slug }}</span></span>
+          <span class="case__panel-title">{{ project.title }}</span>
+          <ul class="case__panel-stack">{% for t in project.stack_list %}<li>{{ t }}</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+    </figure>
+
+    <div class="case__layout">
+      <aside class="case__meta">
+        <dl>
+          <div><dt>Type</dt><dd>{{ project.kind }}</dd></div>
+          {% if project.my_role %}<div><dt>My role</dt><dd>{{ project.my_role }}</dd></div>{% endif %}
+          {% if project.year %}<div><dt>Year</dt><dd>{{ project.year }}</dd></div>{% endif %}
+          {% if project.live_url %}<div><dt>Status</dt><dd><span class="live-pill">Live</span> {{ project.live_domain }}</dd></div>{% endif %}
+          {% if project.stack_list %}<div><dt>Built with</dt><dd><ul class="tags" role="list">{% for t in project.stack_list %}<li>{{ t }}</li>{% endfor %}</ul></dd></div>{% endif %}
+        </dl>
+        {% if project.live_url or project.repo_url %}
+        <div class="case__links">
+          {% if project.live_url %}<a class="btn btn--accent btn--small" href="{{ project.live_url }}" target="_blank" rel="noopener">Visit live site</a>{% endif %}
+          {% if project.repo_url %}<a class="btn btn--ghost btn--small" href="{{ project.repo_url }}" target="_blank" rel="noopener">View source code</a>{% endif %}
+        </div>
+        {% endif %}
+      </aside>
+
+      <div class="case__body">
+        {% if project.problem %}
+        <section>
+          <h2>The problem</h2>
+          <p>{{ project.problem }}</p>
+        </section>
+        {% endif %}
+        {% if project.approach_paragraphs %}
+        <section>
+          <h2>What I did</h2>
+          {% for para in project.approach_paragraphs %}<p>{{ para }}</p>{% endfor %}
+        </section>
+        {% endif %}
+        {% if project.outcome %}
+        <section class="case__result">
+          <h2>Result</h2>
+          <p>{{ project.outcome }}</p>
+        </section>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <nav class="case__next wrap" aria-label="More work">
+    {% if next_project %}
+      <a class="case__next-link tone-{{ next_project.tone }}" href="{{ next_project.get_absolute_url }}">
+        <span class="case__next-label">Next project</span>
+        <span class="case__next-title">{{ next_project.title }}</span>
+        <span class="case__next-summary">{{ next_project.summary }}</span>
+      </a>
+    {% endif %}
+    <a class="btn btn--accent" href="{% url 'portfolio:home' %}#contact">Talk to me about a similar project</a>
+  </nav>
+</article>
+{% endblock %}

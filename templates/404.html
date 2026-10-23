@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Page not found{% endblock %}
+{% block content %}
+<section class="wrap empty-site">
+  <h1>This page doesn't exist</h1>
+  <p>The link may be old, or the project may have been renamed. Everything current is on the home page.</p>
+  <a class="btn btn--ink" href="{% url 'portfolio:home' %}">Go to the home page</a>
+</section>
+{% endblock %}
